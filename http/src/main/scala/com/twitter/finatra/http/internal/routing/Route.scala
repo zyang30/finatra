@@ -16,7 +16,7 @@ private[http] object Route {
 //optimized
 private[http] case class Route(
   name: String,
-  method: Method,
+  verb: Method,
   uri: String,
   admin: Boolean,
   index: Option[RouteIndex],
@@ -29,6 +29,7 @@ private[http] case class Route(
 ) {
 
   val path = normalizeUriToPath(uri)
+  val method = verb
 
   private[this] val pattern = PathPattern(path)
   private[this] val routeInfo = RouteInfo(name, path)

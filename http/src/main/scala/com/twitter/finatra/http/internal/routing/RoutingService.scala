@@ -12,15 +12,17 @@ private[http] class RoutingService(routes: Seq[Route])
     extends Service[Request, Response]
     with Logging {
 
-  private val get = Routes.createForMethod(routes, Get)
-  private val post = Routes.createForMethod(routes, Post)
-  private val put = Routes.createForMethod(routes, Put)
-  private val delete = Routes.createForMethod(routes, Delete)
-  private val options = Routes.createForMethod(routes, Options)
-  private val patch = Routes.createForMethod(routes, Patch)
-  private val head = Routes.createForMethod(routes, Head)
-  private val trace = Routes.createForMethod(routes, Trace)
-  private val any = Routes.createForMethod(routes, AnyMethod)
+//  private val get = Routes.createForMethod(routes, Get)
+//  private val post = Routes.createForMethod(routes, Post)
+//  private val put = Routes.createForMethod(routes, Put)
+//  private val delete = Routes.createForMethod(routes, Delete)
+//  private val options = Routes.createForMethod(routes, Options)
+//  private val patch = Routes.createForMethod(routes, Patch)
+//  private val head = Routes.createForMethod(routes, Head)
+//  private val trace = Routes.createForMethod(routes, Trace)
+//  private val any = Routes.createForMethod(routes, AnyMethod)
+
+  private val routesTree = Routes.createForPath(routes)
 
   private val routesStr = routes map { _.summary } mkString ", "
 
@@ -31,18 +33,22 @@ private[http] class RoutingService(routes: Seq[Route])
   }
 
   private[finatra] def route(request: Request, bypassFilters: Boolean): Future[Response] = {
+//    (request.method match {
+//      case Get => get.handle(request, bypassFilters)
+//      case Post => post.handle(request, bypassFilters)
+//      case Put => put.handle(request, bypassFilters)
+//      case Delete => delete.handle(request, bypassFilters)
+//      case Options => options.handle(request, bypassFilters)
+//      case Patch => patch.handle(request, bypassFilters)
+//      case Head => head.handle(request, bypassFilters)
+//      case Trace => trace.handle(request, bypassFilters)
+//      case _ => badRequest(request.method)
+//    })
     (request.method match {
-      case Get => get.handle(request, bypassFilters)
-      case Post => post.handle(request, bypassFilters)
-      case Put => put.handle(request, bypassFilters)
-      case Delete => delete.handle(request, bypassFilters)
-      case Options => options.handle(request, bypassFilters)
-      case Patch => patch.handle(request, bypassFilters)
-      case Head => head.handle(request, bypassFilters)
-      case Trace => trace.handle(request, bypassFilters)
       case _ => badRequest(request.method)
-    }).getOrElse {
-      any
+    })
+     .getOrElse {
+      routesTree
         .handle(request, bypassFilters)
         .getOrElse(notFound(request))
     }

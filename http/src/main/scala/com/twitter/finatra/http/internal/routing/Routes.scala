@@ -3,7 +3,9 @@ package com.twitter.finatra.http.internal.routing
 import com.twitter.finagle.http.{Method, Request, Response}
 import com.twitter.inject.conversions.iterable._
 import com.twitter.util.Future
-import java.util.{HashMap => JMap}
+//import java.util.{HashMap => JMap}
+
+import RouteTrie
 
 private[http] object Routes {
 
@@ -31,21 +33,29 @@ private[http] class Routes(routes: Array[Route]) {
   //Note we subtract 1 because our while loop starts at -1 and increments before the array lookup
   private[this] val nonConstantRoutesLimit = nonConstantRoutes.length - 1
 
-  private[this] val constantRouteMap: JMap[String, Route] = {
-    val jMap = new JMap[String, Route]()
-    for (route <- constantRoutes) {
-      jMap.put(route.path, route)
-    }
-    jMap
+  //change Jmap to Trie
+//  private[this] val constantRouteMap: JMap[String, Route] = {
+//    val jMap = new JMap[String, Route]()
+//    for (route <- constantRoutes) {
+//      jMap.put(route.path, route)
+//    }
+//    jMap
+//  }
+  private[this] var RouteTrie: RouteTrie = new RouteTrie()
+  for (route <- constantRoutes){
+    constantRouteMap.addRoute(route)
   }
+  private[this] val constantROuteMap: RouteTrie = RouteTrie
 
   def handle(request: Request, bypassFilters: Boolean = false): Option[Future[Response]] = {
     val path = request.path // Store path since Request#path is derived
     val secondaryPath = if (!path.endsWith("/")) path + "/" else null
 
+    val method = request.method
+
     // look for constant route matches
-    val constantRouteResult = constantRouteMap.get(path)
-    val secondaryConstantRouteResult = constantRouteMap.get(secondaryPath)
+    val constantRouteResult = constantRouteMap.get(path, method)
+    val secondaryConstantRouteResult = constantRouteMap.get(secondaryPath, method)
     if (constantRouteResult != null) {
       constantRouteResult.handleMatch(request, bypassFilters)
     } else if (secondaryPath != null && secondaryConstantRouteResult != null) {
